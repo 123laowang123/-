@@ -1,0 +1,233 @@
+#include<stdlib.h>
+#include<stdio.h>
+#define MAXSIZE 1024
+typedef char elemtype;
+
+//定义栈结构
+typedef struct stack
+{
+	elemtype data[MAXSIZE];
+	int top;// top 是栈顶所在的位置，约定空栈top=-1 
+ }Stack;
+ //初始化栈
+ Stack *init()
+ {
+ 	Stack * s=(Stack*)malloc(sizeof(Stack)*MAXSIZE);
+    if(s==NULL)
+    {
+    	printf("初始化失败");
+    	return s;
+	}
+	s->top=-1;
+	return s;
+  }
+  //判断栈是否已满 
+  int full(Stack *s)
+  {
+  	if(s->top==1023)
+  	{
+  		return 1;
+	  }
+	  return 0;
+  }
+  // 判断栈是否为空 
+  int empty(Stack *s)
+  {
+  	return s->top==-1;
+  }
+  //遍历栈中的元素，从栈底开始遍历
+  void print(Stack* s)
+  {
+  	if(empty(s))
+  	{
+  		printf("这是一个空栈\n");
+	  }
+	  for(int i=0; i<=s->top;i++)
+	  {
+	  	printf("%c\t",s->data[i]);
+	  }
+	  printf("\n");
+   } 
+   
+  // 压栈（入栈）
+  //成功返回1，失败返回-1
+int push(Stack* s,elemtype e)
+  {
+  	//判断是否已满，如果满，则无法压栈
+	  if(full(s))
+	  {
+	  	printf("栈已满，无法压栈");
+	  	return 0;
+	   } 
+	   s->data[++s->top]=e;
+	   return 1;
+   } 
+   //出栈
+   int pop(Stack *s,elemtype *e)
+   {
+   	if(empty(s))
+   	{
+   		printf("这是一个空栈");
+	   }
+	   *e=s->data[s->top--];
+	  return 1;
+	
+	} 
+	elemtype peek(Stack *s)
+	{
+		if(empty(s))
+		{
+			printf("空的");
+			return 0;
+		}
+		return s->data[s->top];
+	}
+	//清空栈
+	Stack* clear(Stack *s)
+	{
+		if(empty(s))
+		{
+			printf("这是个空栈");
+		}
+		else{
+			elemtype *p;
+		   *p=s->data[s->top];
+		   while(s->top!=0)
+		   {
+		   	free(p);
+		    s->top--;
+		   }
+		}
+		return s;
+	 } 
+	 Stack* fixTofro(const char* s)
+	 {
+	 	Stack* expr=init();
+	 	Stack* pro =init();
+	 	char *p=(char *)s;
+		char e;
+	 	while(*p!='\0')
+	 	{   
+	 	if(*p>='0'&&*p<='9')
+	 	    {
+	 	    	push(expr,*p);
+	 	    	if(!(*(p+1)>='0' && *(p+1)<='9'))
+			{
+				push(expr,'f');
+			}
+			 }
+		else
+		{	 //操作符号 
+			 if(empty(pro))
+			 {
+			 	push(pro,*p);
+			 }
+			 else if(*p=='(')
+			 {
+			 	push(pro,*p);
+			 }
+			 else if(*p==')')
+			 {
+			 	while(peek(pro)!='(')
+			 	{
+			 		pop(pro,&e);//出栈
+					 push(expr,e);
+				 }
+				 pop(pro,&e);
+			 }
+			 else if(*p=='*'||*p=='/')
+			 {
+			 	while(!empty(pro) && (peek(pro)=='*'||peek(pro)=='/'))
+			 	{
+			 		pop(pro,&e);
+			 		push(expr,e);
+				  } 
+				  push(pro,*p);
+			 }
+			 else if(*p=='+'||*p=='-')
+			 {
+			 	while(!empty(pro) && (peek(pro) == '*'||peek(pro) == '/'||peek(pro) == '+'||peek(pro) == '-'))
+			 	{
+			 		pop(pro,&e);
+			 		push(expr,e);
+				  } 
+				  push(pro,*p);
+			 }
+			 }
+	 		p++;
+	 	}
+	 		while(!empty(pro))
+	 		{
+	 			pop(pro,&e);
+	 			push(expr,e);
+			 }
+			 return expr;
+	 }
+	 //2. 后缀表达式求值
+int qiuzhi(Stack* expr) {
+	int num[1024]= {0};
+	int top=-1;
+	for(int i=0; i<=expr->top; i++) {
+		if(i==0) { //判断第一位数字
+			if(expr->data[i+1]=='f') 
+			{
+				num[++top]=(expr->data[i]-'0');
+			} 
+			else if((expr->data[i+1])!='f')
+			 {
+				num[++top]=(expr->data[i]-'0')*10;
+			}
+		} 
+		else {
+			if(expr->data[i]>='0'&&expr->data[i]<='9')
+			{
+			if(!(expr->data[i-1]>='0'&&expr->data[i-1]<='9')&&expr->data[i+1]!='f') 
+			{ //是第一位数字
+				num[++top]=(expr->data[i]-'0')*10;
+			} 
+			else if(expr->data[i-1]>='0'&&expr->data[i-1]<='9'&&expr->data[i+1]>='0'&&expr->data[i+1]<='9') 
+			{//中间位数 
+				num[top]=(num[top]+(expr->data[i]-'0'))*10;
+			} 
+			else if(expr->data[i-1]>='0'&&expr->data[i-1]<='9'&&expr->data[i+1]=='f')
+			{//最后一位数字 
+				num[top]=num[top]+(expr->data[i]-'0');
+			} 
+			else if(!(expr->data[i-1]>='0'&&expr->data[i-1]<='9') && expr->data[i+1]=='f')
+			{
+				num[++top]=(expr->data[i]-'0'); 
+			}
+		}
+	
+			else if(expr->data[i]=='+') 
+			{
+				num[top-1]=num[top-1]+num[top];
+				top--;
+			} 
+			else if(expr->data[i]=='-') 
+			{
+				num[top-1]=num[top-1]-num[top];
+					top--;
+			} 
+			else if(expr->data[i]=='*') 
+			{
+				num[top-1]=num[top-1]*num[top];
+					top--;
+			} 
+			else if(expr->data[i]=='/') 
+			{
+				num[top-1]=num[top-1]/num[top];
+			}
+     }
+}
+		return num[0];
+	}
+
+	 int main ()
+	 {
+	 	 const char* s="10000+(10/1)*2-1";
+		 Stack *postExpr= fixTofro(s);
+		 print(postExpr);
+		 printf("%d",qiuzhi(postExpr));
+		 return 0;
+	  } 
